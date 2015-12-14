@@ -31,9 +31,10 @@ The sorted sequence is stored in [ita,ite) if rounds is even and [tita,tite) if 
 The function will compute the histogram for the next round inside the current round when
 interleave is set to one, otherwise the byte histogram for a round is computed in a separate scan.
 As setting interleave to 1 uses one division operation per element this is often slower
-than performing another linear scan, although it reduces the amount of memory accesses.
-The function returns 0 on success and a non-zero value on failure (failed to
-allocate memory or to create mutexes/conditions variables/threads).
+than performing another linear scan, although it reduces the amount of memory accesses. Interleave mode
+(interleave=1) however can be faster than non interleaved mode as soon as the records moved are
+somewhat larger than the keys scanned. The function returns 0 on success and a non-zero value on failure 
+(failed to allocate memory or to create mutexes/conditions variables/threads).
 
 The benchmark program measures the speed up obtained by using a number of
 threads for sorting the sequence n-1,n-2,...,1,0 stored in 64 bit (type
