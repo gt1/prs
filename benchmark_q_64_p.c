@@ -62,36 +62,49 @@ int compare_uint128_t(void const * va, void const * vb)
 {
 	uint64_t * pa = (uint64_t*)va;
 	uint64_t * pb = (uint64_t*)vb;
-	unsigned int i;
 
 	#if defined(PARALLEL_INTERLEAVED_RADIX_SORT_LITTLE_ENDIAN)
-	pa += 2;
-	pb += 2;
-
-	for ( i = 0; i < 2; ++i )
+	if ( pa[1] != pb[1] )
 	{
-		uint64_t const a = *(--pa);
-		uint64_t const b = *(--pb);
-
-		if ( a < b )
+		if ( pa[1] < pb[1] )
 			return -1;
-		else if ( b < a )
+		else
 			return 1;
+	}
+	else if ( pa[0] != pb[0] )
+	{
+		if ( pa[0] < pb[0] )
+			return -1;
+		else
+			return 1;
+	}
+	else
+	{
+		return 0;
 	}
 	#elif defined(PARALLEL_INTERLEAVED_RADIX_SORT_BIG_ENDIAN)
-	for ( i = 0; i < 2; ++i )
+	if ( pa[0] != pb[0] )
 	{
-		uint64_t const a = *(--pa);
-		uint64_t const b = *(--pb);
-
-		if ( a < b )
+		if ( pa[0] < pb[0] )
 			return -1;
-		else if ( b < a )
+		else
 			return 1;
 	}
-	#endif
+	else if ( pa[1] != pb[1] )
+	{
+		if ( pa[1] < pb[1] )
+			return -1;
+		else
+			return 1;
+	}
+	else
+	{
+		return 0;
+	}
 
-	return 0;
+	#else
+	#error "Unknown byte order."
+	#endif
 }
 
 int main()
@@ -105,8 +118,8 @@ int main()
 	int interleave = 0;
 
 	typedef uint64_t_pair value_type;
-	/* unsigned int const rounds = sizeof(value_type); */
-	unsigned int const rounds = 8;
+	unsigned int const rounds = sizeof(value_type);
+	/* unsigned int const rounds = 8; */
 
 	value_type * A = 0;
 	value_type * B = 0;
@@ -116,6 +129,8 @@ int main()
 	unsigned int p;
 	double T[33];
 	double qsorttime = -1;
+
+	srand(time(0));
 
 	A = (value_type *)malloc(n*sizeof(value_type));
 	B = (value_type *)malloc(n*sizeof(value_type));
@@ -133,17 +148,22 @@ int main()
 
 	for ( i = 0; i < n; ++i )
 	{
-		uint64_t v[2];
 		unsigned int j, k;
 
 		for ( j = 0; j < 2; ++j )
 		{
-			v[j] = 0;
+			uint64_t v = 0;
+
 			for ( k = 0; k < sizeof(uint64_t); ++k )
 			{
-				v[j] <<= 8;
-				v[j] |= (uint64_t)(rand()&0xff);
+				v <<= 8;
+				v |= (uint64_t)(rand()&0xff);
 			}
+
+			if ( j == 0 )
+				C[i].first = v;
+			else
+				C[i].second = v;
 		}
 	}
 
@@ -156,6 +176,14 @@ int main()
 	gettimeofday(&aft_tv,0);
 	subtim(&aft_tv, &bef_tv, &sub_tv);
 	qsorttime = ( sub_tv.tv_sec + 1e-6 * sub_tv.tv_usec );
+
+	for ( i = 1; i < n; ++i )
+		assert (
+			compare_uint128_t(
+				A+(i-1),
+				A+i
+			) <= 0
+		);
 
 	fprintf(stderr,"qsort num/sec=%f time=%f\n", n / qsorttime, qsorttime);
 
