@@ -27,15 +27,9 @@ modification, are permitted provided that the following conditions are met:
 
 */
 
-#if ! defined(PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT)
-#define PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT
+#include "prs_uint128_t.h"
 
-#define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE unsigned int
-#define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_unsigned_int
+#define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE __m128i
+#define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_uint128_t
 
-#include "prs.ih"
-
-#undef PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME
-#undef PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE
-
-#endif
+#include "prs.ic"

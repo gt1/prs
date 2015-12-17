@@ -27,11 +27,13 @@ modification, are permitted provided that the following conditions are met:
 
 */
 
-#if ! defined(PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT)
-#define PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT
+#if ! defined(PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT128_T)
+#define PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT128_T
 
-#define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE unsigned int
-#define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_unsigned_int
+#include <emmintrin.h>
+
+#define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE __m128i
+#define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_uint128_t
 
 #include "prs.ih"
 

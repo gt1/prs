@@ -26,8 +26,7 @@ modification, are permitted provided that the following conditions are met:
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-#include "prs_uint.h"
-#include "prs_uint64_t.h"
+#include "prs_uint128_t.h"
 
 #include <sys/time.h>
 #include <float.h>
@@ -38,6 +37,7 @@ modification, are permitted provided that the following conditions are met:
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "prs_endian.h"
 
@@ -58,19 +58,40 @@ static void subtim(struct timeval * aft_tv, struct timeval * bef_tv, struct time
 	}
 }
 
-int compare_unsigned_int(void const * va, void const * vb)
+int compare_uint128_t(void const * va, void const * vb)
 {
-	unsigned int * pa = (unsigned int*)va;
-	unsigned int * pb = (unsigned int*)vb;
-	unsigned int a = *pa;
-	unsigned int b = *pb;
+	uint64_t * pa = (uint64_t*)va;
+	uint64_t * pb = (uint64_t*)vb;
+	unsigned int i;
 
-	if ( a < b )
-		return -1;
-	else if ( b < a )
-		return 1;
-	else
-		return 0;
+	#if defined(PARALLEL_INTERLEAVED_RADIX_SORT_LITTLE_ENDIAN)
+	pa += 2;
+	pb += 2;
+
+	for ( i = 0; i < sizeof(__m128)/sizeof(uint64_t); ++i )
+	{
+		uint64_t const a = *(--pa);
+		uint64_t const b = *(--pb);
+
+		if ( a < b )
+			return -1;
+		else if ( b < a )
+			return 1;
+	}
+	#elif defined(PARALLEL_INTERLEAVED_RADIX_SORT_BIG_ENDIAN)
+	for ( i = 0; i < sizeof(__m128)/sizeof(uint64_t); ++i )
+	{
+		uint64_t const a = *(--pa);
+		uint64_t const b = *(--pb);
+
+		if ( a < b )
+			return -1;
+		else if ( b < a )
+			return 1;
+	}
+	#endif
+
+	return 0;
 }
 
 int main()
@@ -79,12 +100,13 @@ int main()
 	struct timeval aft_tv;
 	struct timeval sub_tv;
 
-	unsigned int const nbits = 26;
+	unsigned int const nbits = 27;
 	size_t const n = (((size_t)(1))<<nbits);
 	int interleave = 0;
 
-	typedef unsigned int value_type;
+	typedef __m128 value_type;
 	unsigned int const rounds = sizeof(value_type);
+	/* unsigned int const rounds = 8; */
 
 	value_type * A = 0;
 	value_type * B = 0;
@@ -111,14 +133,18 @@ int main()
 
 	for ( i = 0; i < n; ++i )
 	{
-		unsigned int v = 0;
+		unsigned char v[16] __attribute__ ((aligned (16)));
 		unsigned int j;
-		for ( j = 0; j < sizeof(value_type); ++j )
-		{
-			v <<= CHAR_BIT;
-			v |= (rand() & 0xff);
-		}
-		C [ i ] = v;
+		#if defined(PARALLEL_INTERLEAVED_RADIX_SORT_LITTLE_ENDIAN)
+		for ( j = 0; j < rounds; ++j )
+			v[j] = rand() & 0xff;
+		#elif defined(PARALLEL_INTERLEAVED_RADIX_SORT_BIG_ENDIAN)
+		for ( j = 0; j < rounds; ++j )
+			v[sizeof(value_type)-j-1] = rand() & 0xff;
+		#else
+		#error "Unknown byte order"
+		#endif
+		C [ i ] = *((__m128*)(&v));
 	}
 
 	/* copy C to A */
@@ -126,7 +152,7 @@ int main()
 
 	gettimeofday(&bef_tv,0);
 	/* sort A */
-	qsort(A,n,sizeof(value_type),compare_unsigned_int);
+	qsort(A,n,sizeof(value_type),compare_uint128_t);
 	gettimeofday(&aft_tv,0);
 	subtim(&aft_tv, &bef_tv, &sub_tv);
 	qsorttime = ( sub_tv.tv_sec + 1e-6 * sub_tv.tv_usec );
@@ -154,6 +180,8 @@ int main()
 
 			for ( run = 0; run < 10u; ++run )
 			{
+				/* #define RADIXSORT_CHECK */
+
 				double t;
 				#if defined(RADIXSORT_CHECK)
 				value_type * R;
@@ -162,7 +190,7 @@ int main()
 				memcpy(A,C,n*sizeof(value_type));
 
 				gettimeofday(&bef_tv,0);
-				radixsort_unsigned_int(&A[0],&B[0],n,p,rounds,&keybytes[0],interleave);
+				radixsort_uint128_t(A,B,n,p,rounds,&keybytes[0],interleave);
 				gettimeofday(&aft_tv,0);
 
 				subtim(&aft_tv, &bef_tv, &sub_tv);
@@ -174,12 +202,12 @@ int main()
 				fprintf(stderr,"checking\n");
 				R = (rounds & 1) ? &B[0] : &A[0];
 				for ( i = 1; i < n; ++i )
-					assert ( R[i-1] <= R[i] );
+					assert ( compare_uint128_t(R+(i-1),R+i) <= 0 );
 
 				memcpy(B,C,n*sizeof(value_type));
-				qsort(B,n,sizeof(value_type),compare_unsigned_int);
+				qsort(B,n,sizeof(value_type),compare_uint128_t);
 				for ( i = 0; i < n; ++i )
-					assert ( R[i] == B[i] );
+					assert ( compare_uint128_t(R+i,B+i) == 0 );
 				#endif
 
 				fprintf(stderr,"threads=%d interleave=%d num/sec=%f time=%f speedup/q=%f speedup/1=%f\n", (int)p, interleave, n / T[p], T[p], qsorttime/T[p], T[1]/T[p]);

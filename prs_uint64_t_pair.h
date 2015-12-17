@@ -27,11 +27,19 @@ modification, are permitted provided that the following conditions are met:
 
 */
 
-#if ! defined(PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT)
-#define PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT
+#if ! defined(PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT64_T_PAIR)
+#define PARALLEL_INTERLEAVED_RADIX_SORT_GUARD_UINT64_T_PAIR
 
-#define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE unsigned int
-#define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_unsigned_int
+#include <stdint.h> /* for uint64_t */
+
+typedef struct _uint64_t_pair
+{
+	uint64_t first;
+	uint64_t second;
+} uint64_t_pair;
+
+#define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE uint64_t_pair
+#define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_uint64_t_pair
 
 #include "prs.ih"
 

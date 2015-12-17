@@ -11,7 +11,7 @@ modification, are permitted provided that the following conditions are met:
 2. Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-3. The name of German Tischler may not be used to endorse or promote products 
+3. The name of German Tischler may not be used to endorse or promote products
    derived from this software without specific prior written permission.
 
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
@@ -25,11 +25,11 @@ modification, are permitted provided that the following conditions are met:
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-*/      
+*/
 #include "prs_uint64_t.h"
 
 #include <sys/time.h>
-#include <float.h>       
+#include <float.h>
 #include <limits.h>
 #include <assert.h>
 #include <stdio.h>
@@ -47,9 +47,9 @@ int main()
 	size_t const n = (((size_t)(1))<<nbits);
 	unsigned int const rounds = (nbits + 7)/8;
 	double T[33];
-	
+
 	typedef uint64_t value_type;
-	
+
 	value_type * A = (value_type *)malloc(n*sizeof(value_type));
 	value_type * B = (value_type *)malloc(n*sizeof(value_type));
 	unsigned int keybytes[sizeof(value_type)];
@@ -64,12 +64,12 @@ int main()
 	for ( i = 0; i < sizeof(value_type); ++i )
 		keybytes[i] = sizeof(value_type)-i-1;
 	#else
-	#error "Unknown byte order"	
+	#error "Unknown byte order"
 	#endif
-	
+
 	for ( i = 0; i < 33; ++i )
 		T[i] = DBL_MAX;
-	
+
 	for ( p = 1; p <= 4; ++p )
 	{
 		unsigned int run;
@@ -80,7 +80,7 @@ int main()
 			double t;
 			for ( i = 0; i < n; ++i )
 				A[i] = n-i-1;
-			
+
 			gettimeofday(&bef_tv,0);
 			radixsort_uint64_t(&A[0],&B[0],n,p,rounds,&keybytes[0],1 /* interleave */);
 			gettimeofday(&aft_tv,0);
@@ -98,10 +98,10 @@ int main()
 				sub_tv.tv_usec = aft_u;
 				sub_tv.tv_sec -= 1;
 			}
-						
+
 			t = ( sub_tv.tv_sec + 1e-6 * sub_tv.tv_usec );
 			T[p] = t < T[p] ? t : T[p];
-						    
+
 			R = (rounds & 1) ? &B[0] : &A[0];
 			for ( i = 1; i < n; ++i )
 				assert ( R[i-1] < R[i] );
@@ -115,6 +115,6 @@ int main()
 	for ( size_t i = 0; i < n; ++i )
 		fprintf(stderr,"%d\n", (int)A[i]);
 	#endif
-	
+
 	return 0;
 }
