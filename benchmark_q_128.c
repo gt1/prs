@@ -62,36 +62,49 @@ int compare_uint128_t(void const * va, void const * vb)
 {
 	uint64_t * pa = (uint64_t*)va;
 	uint64_t * pb = (uint64_t*)vb;
-	unsigned int i;
 
 	#if defined(PARALLEL_INTERLEAVED_RADIX_SORT_LITTLE_ENDIAN)
-	pa += 2;
-	pb += 2;
-
-	for ( i = 0; i < sizeof(__m128)/sizeof(uint64_t); ++i )
+	if ( pa[1] != pb[1] )
 	{
-		uint64_t const a = *(--pa);
-		uint64_t const b = *(--pb);
-
-		if ( a < b )
+		if ( pa[1] < pb[1] )
 			return -1;
-		else if ( b < a )
+		else
 			return 1;
+	}
+	else if ( pa[0] != pb[0] )
+	{
+		if ( pa[0] < pb[0] )
+			return -1;
+		else
+			return 1;
+	}
+	else
+	{
+		return 0;
 	}
 	#elif defined(PARALLEL_INTERLEAVED_RADIX_SORT_BIG_ENDIAN)
-	for ( i = 0; i < sizeof(__m128)/sizeof(uint64_t); ++i )
+	if ( pa[0] != pb[0] )
 	{
-		uint64_t const a = *(--pa);
-		uint64_t const b = *(--pb);
-
-		if ( a < b )
+		if ( pa[0] < pb[0] )
 			return -1;
-		else if ( b < a )
+		else
 			return 1;
 	}
-	#endif
+	else if ( pa[1] != pb[1] )
+	{
+		if ( pa[1] < pb[1] )
+			return -1;
+		else
+			return 1;
+	}
+	else
+	{
+		return 0;
+	}
 
-	return 0;
+	#else
+	#error "Unknown byte order."
+	#endif
 }
 
 int main()
