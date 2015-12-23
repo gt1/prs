@@ -32,9 +32,11 @@ modification, are permitted provided that the following conditions are met:
 
 #define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE unsigned int
 #define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_unsigned_int
+#define PARALLEL_INTERLEAVED_RADIX_SORT_DENSEKEY_FUNCTIONNAME radixsort_densekey_unsigned_int
 
 #include "prs.ih"
 
+#undef PARALLEL_INTERLEAVED_RADIX_SORT_DENSEKEY_FUNCTIONNAME
 #undef PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME
 #undef PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE
 

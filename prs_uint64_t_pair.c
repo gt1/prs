@@ -31,5 +31,6 @@ modification, are permitted provided that the following conditions are met:
 
 #define PARALLEL_INTERLEAVED_RADIX_SORT_VALUE_TYPE uint64_t_pair
 #define PARALLEL_INTERLEAVED_RADIX_SORT_FUNCTIONNAME radixsort_uint64_t_pair
+#define PARALLEL_INTERLEAVED_RADIX_SORT_DENSEKEY_FUNCTIONNAME radixsort_densekey_uint64_t_pair
 
 #include "prs.ic"
